@@ -6,12 +6,12 @@ import numpy_financial as npf
 # ตั้งค่าหน้าเว็บ
 # -----------------------------------------
 st.set_page_config(
-    page_title="FWD SSS Calculator By Golfmaster",
+    page_title="FWD Super Smart Savings Calculator",
     page_icon="📊",
     layout="wide",
 )
 
-st.title("📊 SSS Calculator By Golfmaster")
+st.title("📊 SSS Calculator By Golfmaster V1.0")
 st.subheader("โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
 
 st.info(
@@ -19,44 +19,54 @@ st.info(
     "ไม่ใช่ใบเสนอขายหรือการรับประกันผลตอบแทนจากบริษัทประกัน"
 )
 
+
 # -----------------------------------------
-# ส่วนกรอกข้อมูล
+# ส่วนกรอกข้อมูล — แสดงบนหน้าหลัก
 # -----------------------------------------
-st.sidebar.header("⚙️ กำหนดข้อมูลสำหรับคำนวณ")
+st.subheader("⚙️ กำหนดข้อมูลสำหรับคำนวณ")
 
-plan_years = st.sidebar.selectbox(
-    "แผนชำระเบี้ยประกัน",
-    options=[7, 15],
-    format_func=lambda x: f"ชำระ {x} ปี (คุ้มครอง 25 ปี)",
-)
+col1, col2, col3, col4 = st.columns(4)
 
-premium_per_year = st.sidebar.number_input(
-    "เบี้ยประกันต่อปี (บาท)",
-    min_value=1_000.0,
-    max_value=100_000_000.0,
-    value=150_000.0 if plan_years == 7 else 70_000.0,
-    step=10_000.0,
-)
+with col1:
+    plan_years = st.selectbox(
+        "แผนชำระเบี้ยประกัน",
+        options=[7, 15],
+        format_func=lambda x: f"ชำระ {x} ปี",
+    )
 
-tax_bracket = st.sidebar.selectbox(
-    "อัตราภาษีส่วนบุคคล (%)",
-    options=[0, 5, 10, 15, 20, 25, 30, 35],
-    index=2,
-)
+with col2:
+    default_premium = 150000.0 if plan_years == 7 else 70000.0
 
-custom_index_rate = st.sidebar.number_input(
-    "อัตราผลตอบแทนสมมติจากดัชนี (%)",
-    min_value=0.0,
-    max_value=100.0,
-    value=4.0,
-    step=0.5,
-)
+    premium_per_year = st.number_input(
+        "เบี้ยประกันต่อปี (บาท)",
+        min_value=1000.0,
+        max_value=100_000_000.0,
+        value=default_premium,
+        step=10000.0,
+    )
 
-calculate = st.sidebar.button(
+with col3:
+    tax_bracket = st.selectbox(
+        "อัตราภาษี (%)",
+        options=[0, 5, 10, 15, 20, 25, 30, 35],
+        index=2,
+    )
+
+with col4:
+    custom_index_rate = st.number_input(
+        "ผลตอบแทนสมมติจากดัชนี (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=4.0,
+        step=0.5,
+    )
+
+calculate = st.button(
     "🧮 คำนวณผลประโยชน์",
     type="primary",
     use_container_width=True,
 )
+
 
 # -----------------------------------------
 # ฟังก์ชันคำนวณ
