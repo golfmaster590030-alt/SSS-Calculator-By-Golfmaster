@@ -9,9 +9,7 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
-# แสดงรูปภาพแบนเนอร์ที่เราอัปโหลดขึ้นมา
 
-st.image("banner.png", use_container_width=True)
 st.title("📊 SSS Calculator By Golfmaster V1.0")
 st.subheader("โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
 
