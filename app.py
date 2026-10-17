@@ -57,7 +57,7 @@ with col4:
         "ผลตอบแทนสมมติจากดัชนี (%)",
         min_value=0.0,
         max_value=100.0,
-        value=4.0,
+        value=6.0,
         step=0.5,
     )
 
