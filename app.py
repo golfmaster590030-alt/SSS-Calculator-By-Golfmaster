@@ -1,96 +1,320 @@
+
 import streamlit as st
 import numpy_financial as npf
 
-# ตั้งค่าหน้าจอเว็บ
-st.set_page_config(page_title="FWD Super Smart Savings Calculator", page_icon="📈", layout="centered")
+# -----------------------------------------
+# ตั้งค่าหน้าเว็บ
+# -----------------------------------------
+st.set_page_config(
+    page_title="FWD Super Smart Savings Calculator",
+    page_icon="📊",
+    layout="wide",
+)
 
-st.title("📈 คำนวณผลตอบแทน FWD Super Smart Savings By GOLFMASTER")
-st.write("โปรแกรมจำลองผลประโยชน์การออมทรัพย์แบบ Index Linked พร้อมคำนวณสิทธิ์ลดหย่อนภาษี")
+st.title("📊 FWD Super Smart Savings")
+st.subheader("โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
 
-# ส่วนรับค่า (Sidebar หรือหน้าหลัก)
-st.subheader("📝 กรอกข้อมูลแผนประกันของคุณ")
+st.info(
+    "เครื่องมือจำลองผลประโยชน์ตามสมมติฐานที่ผู้ใช้กำหนด "
+    "ไม่ใช่ใบเสนอขายหรือการรับประกันผลตอบแทนจากบริษัทประกัน"
+)
 
-plan = st.selectbox("เลือกแผนชำระเบี้ย", ["25/7 (จ่ายเบี้ย 7 ปี คุ้มครอง 25 ปี)", "25/15 (จ่ายเบี้ย 15 ปี คุ้มครอง 25 ปี)"])
-plan_years = 7 if "7" in plan else 15
+# -----------------------------------------
+# ส่วนกรอกข้อมูล
+# -----------------------------------------
+st.sidebar.header("⚙️ กำหนดข้อมูลสำหรับคำนวณ")
 
-premium_per_year = st.number_input("จำนวนเงินเบี้ยประกันภัยต่อปี (บาท)", min_value=1000.0, value=150000.0, step=10000.0)
-tax_bracket = st.slider("อัตราภาษีเงินได้บุคคลธรรมดาของคุณ (%)", min_value=0.0, max_value=35.0, value=10.0, step=5.0)
-custom_index_rate = st.slider("อัตราผลตอบแทนสมมติจากดัชนีอ้างอิงต่อปี (%)", min_value=0.0, max_value=30.0, value=4.0, step=1.0) / 100.0
+plan_years = st.sidebar.selectbox(
+    "แผนชำระเบี้ยประกัน",
+    options=[7, 15],
+    format_func=lambda x: f"ชำระ {x} ปี (คุ้มครอง 25 ปี)",
+)
 
-# ปุ่มกดคำนวณ
-if st.button("🚀 คำนวณผลลัพธ์"):
+premium_per_year = st.sidebar.number_input(
+    "เบี้ยประกันต่อปี (บาท)",
+    min_value=1_000.0,
+    max_value=100_000_000.0,
+    value=150_000.0 if plan_years == 7 else 70_000.0,
+    step=10_000.0,
+)
+
+tax_bracket = st.sidebar.selectbox(
+    "อัตราภาษีส่วนเพิ่ม (%)",
+    options=[0, 5, 10, 15, 20, 25, 30, 35],
+    index=2,
+)
+
+custom_index_rate = st.sidebar.number_input(
+    "อัตราผลตอบแทนสมมติจากดัชนี (%)",
+    min_value=0.0,
+    max_value=100.0,
+    value=4.0,
+    step=0.5,
+)
+
+calculate = st.sidebar.button(
+    "🧮 คำนวณผลประโยชน์",
+    type="primary",
+    use_container_width=True,
+)
+
+# -----------------------------------------
+# ฟังก์ชันคำนวณ
+# -----------------------------------------
+def calculate_plan(
+    plan_years,
+    premium_per_year,
+    tax_bracket,
+    custom_index_rate,
+):
     total_protection_years = 25
-    total_paid_premium = premium_per_year * plan_years
-    
-    # 1. คำนวณภาษี
-    eligible_tax_base_per_year = min(premium_per_year, 100000.0)
-    tax_saved_per_year = eligible_tax_base_per_year * (tax_bracket / 100.0)
-    total_tax_saved = tax_saved_per_year * plan_years
-    net_premium_outflow = total_paid_premium - total_tax_saved
 
-    # 2. คำนวณเงินคืนการันตีและโบนัสดัชนี
+    total_paid_premium = premium_per_year * plan_years
+
+    # สมมติฐานสิทธิลดหย่อนภาษี
+    eligible_tax_base = min(premium_per_year, 100_000.0)
+    tax_saved_per_year = eligible_tax_base * tax_bracket / 100
+    total_tax_saved = tax_saved_per_year * plan_years
+
+    net_premium_outflow = (
+        total_paid_premium - total_tax_saved
+    )
+
+    # ผลประโยชน์การันตีตามสูตรต้นฉบับ
     if plan_years == 7:
-        total_guaranteed_received = (premium_per_year * 0.01 * 24) + (premium_per_year * 7.00)
+        total_guaranteed_received = (
+            premium_per_year * 0.01 * 24
+            + premium_per_year * 7.00
+        )
         checkpoint_year = 7
-        base_ref_premium = 150000.0
-        scale_ratio = premium_per_year / base_ref_premium
-        
-        growth_multiplier = ((1 + custom_index_rate) / (1 + 0.04)) ** checkpoint_year
-        checkpoint_bonus = 165848 * scale_ratio * growth_multiplier
-        
-        growth_multiplier_25 = ((1 + custom_index_rate) / (1 + 0.04)) ** total_protection_years
-        year25_bonus = 874545 * scale_ratio * growth_multiplier_25
+        base_checkpoint_bonus = (
+            165848 * premium_per_year / 150000
+        )
+        base_year25_bonus = (
+            874545 * premium_per_year / 150000
+        )
     else:
-        total_guaranteed_received = (premium_per_year * 0.01 * 24) + (premium_per_year * 14.80)
+        total_guaranteed_received = (
+            premium_per_year * 0.01 * 24
+            + premium_per_year * 14.80
+        )
         checkpoint_year = 15
-        base_ref_premium = 70000.0
-        scale_ratio = premium_per_year / base_ref_premium
-        
-        growth_multiplier = ((1 + custom_index_rate) / (1 + 0.04)) ** checkpoint_year
-        checkpoint_bonus = 420473 * scale_ratio * growth_multiplier
-        
-        growth_multiplier_25 = ((1 + custom_index_rate) / (1 + 0.04)) ** total_protection_years
-        year25_bonus = 874545 * scale_ratio * growth_multiplier_25
+        base_checkpoint_bonus = (
+            420473 * premium_per_year / 70000
+        )
+        base_year25_bonus = (
+            874545 * premium_per_year / 70000
+        )
+
+    # โบนัสสมมติตามอัตราดัชนี
+    index_rate = custom_index_rate / 100
+    scale_factor = index_rate / 0.04
+
+    checkpoint_bonus = base_checkpoint_bonus * scale_factor
+    year25_bonus = base_year25_bonus * scale_factor
 
     total_index_bonus = checkpoint_bonus + year25_bonus
-    total_benefits_all = total_guaranteed_received + total_index_bonus
-    net_profit = (total_benefits_all + total_tax_saved) - total_paid_premium
 
-    # 3. คำนวณ IRR
-    cash_flows = [- (premium_per_year - tax_saved_per_year)] * plan_years + [0] * (total_protection_years - plan_years)
-    for yr in range(1, total_protection_years + 1):
-        if yr <= 24:
-            cash_flows[yr - 1] += (premium_per_year * 0.01)
-        if yr == 25:
-            cash_flows[yr - 1] += (total_guaranteed_received - (premium_per_year * 0.01 * 24))
-        if yr == checkpoint_year:
-            cash_flows[yr - 1] += checkpoint_bonus
-        if yr == total_protection_years:
-            cash_flows[yr - 1] += year25_bonus
+    total_benefits_all = (
+        total_guaranteed_received + total_index_bonus
+    )
+
+    net_profit = (
+        total_benefits_all
+        + total_tax_saved
+        - total_paid_premium
+    )
+
+    # กระแสเงินสดสำหรับคำนวณ IRR
+    cash_flows = [
+        -(premium_per_year - tax_saved_per_year)
+        if year <= plan_years
+        else 0.0
+        for year in range(1, total_protection_years + 1)
+    ]
+
+    for year in range(1, total_protection_years + 1):
+
+        # เงินคืน 1% ในปีที่ 1-24
+        if year <= 24:
+            cash_flows[year - 1] += premium_per_year * 0.01
+
+        # เงินคืนการันตีส่วนที่เหลือในปีที่ 25
+        if year == 25:
+            cash_flows[year - 1] += (
+                total_guaranteed_received
+                - premium_per_year * 0.01 * 24
+            )
+
+        # โบนัสตามสมมติฐาน
+        if year == checkpoint_year:
+            cash_flows[year - 1] += checkpoint_bonus
+
+        if year == 25:
+            cash_flows[year - 1] += year25_bonus
 
     try:
-        irr_value = npf.irr(cash_flows) * 100
-    except:
-        irr_value = 0.0
+        irr_result = npf.irr(cash_flows)
+        irr_value = (
+            float(irr_result) * 100
+            if irr_result is not None
+            and irr_result == irr_result
+            else None
+        )
+    except (ValueError, OverflowError, ZeroDivisionError):
+        irr_value = None
 
-    # 4. แสดงผลลัพธ์แบบสวยงามบนเว็บ
-    st.markdown("---")
-    st.subheader("📊 สรุปผลการคำนวณตลอดสัญญา 25 ปี")
-    
+    return {
+        "total_paid_premium": total_paid_premium,
+        "total_tax_saved": total_tax_saved,
+        "net_premium_outflow": net_premium_outflow,
+        "total_guaranteed_received": total_guaranteed_received,
+        "checkpoint_year": checkpoint_year,
+        "checkpoint_bonus": checkpoint_bonus,
+        "year25_bonus": year25_bonus,
+        "total_index_bonus": total_index_bonus,
+        "total_benefits_all": total_benefits_all,
+        "net_profit": net_profit,
+        "irr_value": irr_value,
+        "cash_flows": cash_flows,
+    }
+
+
+def baht(value):
+    return f"{value:,.2f} บาท"
+
+
+# -----------------------------------------
+# แสดงผลลัพธ์
+# -----------------------------------------
+if calculate:
+    result = calculate_plan(
+        plan_years,
+        premium_per_year,
+        tax_bracket,
+        custom_index_rate,
+    )
+
+    st.divider()
+    st.header(f"สรุปผลแผน 25/{plan_years}")
+
+    # ตัวเลขสำคัญ
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "เบี้ยประกันรวม",
+        baht(result["total_paid_premium"]),
+    )
+
+    col2.metric(
+        "ประหยัดภาษีตามสมมติฐาน",
+        baht(result["total_tax_saved"]),
+    )
+
+    col3.metric(
+        "ต้นทุนสุทธิหลังหักภาษี",
+        baht(result["net_premium_outflow"]),
+    )
+
+    st.divider()
+
+    # ผลประโยชน์
+    st.subheader("💰 รายละเอียดผลประโยชน์")
+
     col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="เบี้ยประกันรวมทั้งหมด", value=f"{total_paid_premium:,.2f} ฿")
-        st.metric(label="สิทธิลดหย่อนภาษีรวม", value=f"{total_tax_saved:,.2f} ฿")
-        st.metric(label="ต้นทุนเบี้ยสุทธิหลังหักภาษี", value=f"{net_premium_outflow:,.2f} ฿")
-    with col2:
-        st.metric(label="ผลประโยชน์รวมทั้งหมด", value=f"{total_benefits_all:,.2f} ฿")
-        st.metric(label="กำไรสุทธิรวมลดหย่อนภาษี", value=f"{net_profit:,.2f} ฿")
-        st.metric(label="IRR (ผลตอบแทนเฉลี่ยต่อปี)", value=f"{irr_value:.2f}%")
 
-    st.markdown("---")
-    st.info(f"""
-    **รายละเอียดผลประโยชน์:**
-    - เงินคืนการันตีรวมตลอดสัญญา: **{total_guaranteed_received:,.2f} บาท**
-    - โบนัสดัชนีงวดที่ 1 (ปีที่ {checkpoint_year}): **{checkpoint_bonus:,.2f} บาท**
-    - โบนัสดัชนีงวดที่ 2 (ปีที่ 25): **{year25_bonus:,.2f} บาท**
-    """)
+    with col1:
+        st.markdown("#### ผลประโยชน์การันตี")
+        st.metric(
+            "เงินคืนการันตีรวม",
+            baht(result["total_guaranteed_received"]),
+        )
+
+        st.caption(
+            "ตัวเลขนี้คำนวณจากสูตรที่ระบุในโปรแกรม "
+            "ควรตรวจสอบกับเอกสารผลประโยชน์ของกรมธรรม์"
+        )
+
+    with col2:
+        st.markdown("#### ผลประโยชน์ไม่การันตี")
+
+        st.metric(
+            f"โบนัสปีที่ {result['checkpoint_year']}",
+            baht(result["checkpoint_bonus"]),
+        )
+
+        st.metric(
+            "โบนัสปีที่ 25",
+            baht(result["year25_bonus"]),
+        )
+
+        st.metric(
+            "โบนัสไม่การันตีรวม",
+            baht(result["total_index_bonus"]),
+        )
+
+    st.divider()
+
+    # สรุปผลตอบแทน
+    st.subheader("📈 สรุปผลตอบแทน")
+
+    col1, col2 = st.columns(2)
+
+    col1.metric(
+        "ผลประโยชน์รวม",
+        baht(result["total_benefits_all"]),
+    )
+
+    col2.metric(
+        "กำไรสุทธิรวมประโยชน์ภาษี",
+        baht(result["net_profit"]),
+    )
+
+    if result["irr_value"] is not None:
+        st.metric(
+            "IRR ต่อปี หลังหักภาษีตามสมมติฐาน",
+            f"{result['irr_value']:.2f}%",
+        )
+    else:
+        st.warning(
+            "ไม่สามารถหา IRR ที่เหมาะสมจากกระแสเงินสดชุดนี้ได้"
+        )
+
+    st.caption(
+        f"สมมติอัตราผลตอบแทนจากดัชนี {custom_index_rate:.2f}% ต่อปี "
+        f"และอัตราภาษี {tax_bracket}%"
+    )
+
+    # ตารางกระแสเงินสด
+    with st.expander("ดูตารางกระแสเงินสดสำหรับคำนวณ IRR"):
+        import pandas as pd
+
+        cash_flow_df = pd.DataFrame({
+            "ปีกรมธรรม์": range(1, 26),
+            "กระแสเงินสดสุทธิ (บาท)": result["cash_flows"],
+        })
+
+        st.dataframe(
+            cash_flow_df.style.format({
+                "กระแสเงินสดสุทธิ (บาท)": "{:,.2f}"
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+else:
+    st.markdown("### เริ่มต้นใช้งาน")
+    st.write(
+        "เลือกแผนชำระเบี้ย ระบุเบี้ยประกัน อัตราภาษี "
+        "และผลตอบแทนสมมติจากดัชนีที่แถบด้านซ้าย "
+        "จากนั้นกดปุ่ม **คำนวณผลประโยชน์**"
+    )
+
+st.divider()
+
+st.caption(
+    "ข้อควรระวัง: การลดหย่อนภาษีขึ้นอยู่กับคุณสมบัติของกรมธรรม์ "
+    "เงื่อนไขตามกฎหมาย และสิทธิที่ผู้เอาประกันยังมีอยู่จริง "
+    "โบนัสที่อ้างอิงดัชนีเป็นสมมติฐาน ไม่ใช่ผลตอบแทนการันตี "
+    "โปรดตรวจสอบเอกสารเสนอขายและเงื่อนไขกรมธรรม์ฉบับจริงก่อนนำเสนอ"
+)
