@@ -6,7 +6,7 @@ import numpy_financial as npf
 # ตั้งค่าหน้าเว็บ
 # -----------------------------------------
 st.set_page_config(
-    page_title="FWD Super Smart Savings Calculator",
+    page_title="FWD SSS Calculator By GOLFMASTER",
     page_icon="📊",
     layout="wide",
 )
@@ -39,7 +39,7 @@ premium_per_year = st.sidebar.number_input(
 )
 
 tax_bracket = st.sidebar.selectbox(
-    "อัตราภาษีส่วนเพิ่ม (%)",
+    "อัตราภาษีส่วนบุคคล (%)",
     options=[0, 5, 10, 15, 20, 25, 30, 35],
     index=2,
 )
