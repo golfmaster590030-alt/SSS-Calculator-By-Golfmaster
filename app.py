@@ -6,7 +6,7 @@ import numpy_financial as npf
 # ตั้งค่าหน้าเว็บ
 # -----------------------------------------
 st.set_page_config(
-    page_title="FWD SSS Calculator By GOLFMASTER",
+    page_title="FWD SSS Calculator By Golfmaster",
     page_icon="📊",
     layout="wide",
 )
