@@ -4,7 +4,7 @@ import numpy_financial as npf
 # ตั้งค่าหน้าจอเว็บ
 st.set_page_config(page_title="FWD Super Smart Savings Calculator", page_icon="📈", layout="centered")
 
-st.title("📈 คำนวณผลตอบแทน FWD Super Smart Savings")
+st.title("📈 คำนวณผลตอบแทน FWD Super Smart Savings By GOLFMASTER")
 st.write("โปรแกรมจำลองผลประโยชน์การออมทรัพย์แบบ Index Linked พร้อมคำนวณสิทธิ์ลดหย่อนภาษี")
 
 # ส่วนรับค่า (Sidebar หรือหน้าหลัก)
@@ -15,7 +15,7 @@ plan_years = 7 if "7" in plan else 15
 
 premium_per_year = st.number_input("จำนวนเงินเบี้ยประกันภัยต่อปี (บาท)", min_value=1000.0, value=150000.0, step=10000.0)
 tax_bracket = st.slider("อัตราภาษีเงินได้บุคคลธรรมดาของคุณ (%)", min_value=0.0, max_value=35.0, value=10.0, step=5.0)
-custom_index_rate = st.slider("อัตราผลตอบแทนสมมติจากดัชนีอ้างอิงต่อปี (%)", min_value=0.0, max_value=15.0, value=4.0, step=0.5) / 100.0
+custom_index_rate = st.slider("อัตราผลตอบแทนสมมติจากดัชนีอ้างอิงต่อปี (%)", min_value=0.0, max_value=30.0, value=4.0, step=1) / 100.0
 
 # ปุ่มกดคำนวณ
 if st.button("🚀 คำนวณผลลัพธ์"):
