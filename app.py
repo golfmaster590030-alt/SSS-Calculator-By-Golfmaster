@@ -11,7 +11,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("📊 FWD Super Smart Savings")
+st.title("📊 SSS Calculator By Golfmaster")
 st.subheader("โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
 
 st.info(
