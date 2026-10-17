@@ -1,22 +1,17 @@
 import streamlit as st
 import numpy_financial as npf
 
-# -----------------------------------------
 # ตั้งค่าหน้าเว็บ
-# -----------------------------------------
-st.set_page_config(
-    page_title="FWD Super Smart Savings Calculator",
-    page_icon="📊",
-    layout="wide",
-)
+st.set_page_config(page_title="SSS Calculator By Golfmaster", page_icon="📈", layout="wide")
 
-st.title("📊 SSS Calculator By Golfmaster V1.0")
-st.subheader("โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
+# แสดงรูปภาพแบนเนอร์ที่เราอัปโหลดขึ้นมา
+st.image("banner.png", use_container_width=True)
 
-st.info(
-    "เครื่องมือจำลองผลประโยชน์ตามสมมติฐานที่ผู้ใช้กำหนด "
-    "ไม่ใช่ใบเสนอขายหรือการรับประกันผลตอบแทนจากบริษัทประกัน"
-)
+st.title("SSS Calculator By Golfmaster V1.0")
+st.markdown("### โปรแกรมคำนวณผลประโยชน์และสิทธิลดหย่อนภาษี")
+import streamlit as st
+import numpy_financial as npf
+
 
 
 # -----------------------------------------
