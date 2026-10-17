@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1NBm7N8dqSlHy4Ozo42fV-GJWhvBxGJBT
 """
 
-!pip install numpy-financial -q
 import numpy_financial as npf
 
 def fwd_super_smart_custom_calculator_with_tax():
